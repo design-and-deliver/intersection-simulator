@@ -1,6 +1,8 @@
 # Traffic Intersection Simulator
 
-Four-way intersection with sensor-actuated signals, protected lefts, permissive lefts, and pedestrian crossings. Pure-tick simulation, canvas renderer, 82 tests.
+**Live demo:** https://design-and-deliver.github.io/intersection-simulator/
+
+Four-way intersection with sensor-actuated signals, protected lefts, permissive lefts, and pedestrian crossings. Pure-tick simulation, canvas renderer, 83 tests.
 
 Built for the Droplet take-home ([INTERSECTION.md](../droplet_take_home_v2/INTERSECTION.md)).
 
