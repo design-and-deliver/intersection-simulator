@@ -2,6 +2,20 @@ import { World } from './sim/intersection';
 import { hitTestPedButton, render } from './render/canvas';
 import { mountHud } from './render/hud';
 
+/**
+ * Clamp a raw `now - last` frame delta to the range `[0, 100]` ms.
+ *
+ * Lower bound: RAF's `now` argument can be *earlier* than a `performance.now()`
+ * captured just before scheduling, because it reports the frame-start time of
+ * the current vsync. A small negative dt would otherwise crash the tick loop.
+ *
+ * Upper bound: swallow long pauses (tab backgrounded, debugger paused) rather
+ * than fast-forwarding the sim through minutes at once.
+ */
+export function clampFrameDtMs(rawDtMs: number): number {
+  return Math.max(0, Math.min(100, rawDtMs));
+}
+
 export function startApp(canvas: HTMLCanvasElement, hudRoot: HTMLElement): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('2D context not available');
@@ -54,7 +68,7 @@ export function startApp(canvas: HTMLCanvasElement, hudRoot: HTMLElement): void 
 
   let last = performance.now();
   function frame(now: number) {
-    const dtMs = Math.min(100, now - last); // clamp big pauses (tab switch)
+    const dtMs = clampFrameDtMs(now - last);
     last = now;
     world.tick(dtMs);
     render(ctx!, { controller: world.controller.snapshot(), lanes: world.lanes, timeMs: world.timeMs });
