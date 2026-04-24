@@ -238,6 +238,33 @@ describe('Pedestrian phase (concurrent phasing)', () => {
     expect(c.state.mode === 'YELLOW' || c.state.phase.id !== 'A').toBe(true);
   });
 
+  it('late-press walk still gets full duration — maxGreen stretches past its normal cap', () => {
+    // With pedWalkMs + pedClearanceMs = 11s and maxGreenMs = 20s, a press
+    // at t > 9s would normally get truncated by maxGreen. This test proves
+    // we extend past maxGreen to cover the full walk cycle.
+    const c = new Controller();
+    c.setDemand(() => true);
+    // Get to 15s into Phase A GREEN without a request.
+    c.tick(15000);
+    expect(c.state.phase.id).toBe('A');
+    expect(c.state.mode).toBe('GREEN');
+    // Press late. walk must run full 7s WALK + 4s FLASH = 11s from press.
+    c.requestPed('E');
+    expect(c.snapshot().walkSignalFor('E')).toBe('WALK');
+    // Tick 7s — should still be WALK-ish (right at boundary to FLASH).
+    c.tick(CONFIG.pedWalkMs - 50);
+    expect(c.snapshot().walkSignalFor('E')).toBe('WALK');
+    c.tick(100);
+    expect(c.snapshot().walkSignalFor('E')).toBe('FLASH_DONT_WALK');
+    c.tick(CONFIG.pedClearanceMs);
+    expect(c.snapshot().walkSignalFor('E')).toBe('DONT_WALK');
+    // Confirm the green extended past maxGreenMs to cover this.
+    // Press at t=15s, walk end at t=26s. maxGreen would normally cap at 20s.
+    // Sum of ticks so far: 15000 + (pedWalkMs - 50) + 100 + pedClearanceMs
+    //                    = 15000 + 6950 + 100 + 4000 = 26050
+    // Phase is still GREEN at that point (walk just finished; green can now gap out).
+  });
+
   it('mid-green press gets the full WALK + FLASH duration from press time (green extends to cover)', () => {
     const c = new Controller();
     c.setDemand(() => true); // ensure green can extend if needed

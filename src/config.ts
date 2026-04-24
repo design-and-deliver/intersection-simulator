@@ -15,7 +15,7 @@ export const CONFIG = {
   allRedMs: 1500,
 
   /** Pedestrian WALK signal duration (ms). */
-  pedWalkMs: 7000,
+  pedWalkMs: 10000,
   /** Pedestrian flashing-DON'T-WALK clearance (ms). */
   pedClearanceMs: 4000,
 

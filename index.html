@@ -35,12 +35,19 @@
         background: var(--panel);
         border: 1px solid var(--panel-border);
         border-radius: 8px;
+        overflow: hidden;
       }
       canvas {
         background: #1a1f26;
         display: block;
         max-width: 100%;
         height: auto;
+        /* Zoom the intersection so it fills more of the view; the stage
+           clips the outer road edges. Hit-test coords in app.ts use
+           getBoundingClientRect, which accounts for CSS transforms — clicks
+           still map to the correct canvas-buffer pixel. */
+        transform: scale(1.5625); /* 1.25 × 1.25 — two 25% zoom-ins */
+        transform-origin: center center;
       }
       #hud {
         background: var(--panel);

@@ -68,6 +68,7 @@ export function render(ctx: CanvasRenderingContext2D, input: RenderInput): void 
   drawInFlightCars(ctx, input.lanes, input.timeMs);
   drawSignals(ctx, input.controller, input.timeMs);
   drawPedButtons(ctx, input.controller, input.timeMs);
+  drawCrosswalkBubbles(ctx, input.controller);
 }
 
 function drawAsphaltAndLanes(ctx: CanvasRenderingContext2D): void {
@@ -476,23 +477,23 @@ function drawLeftSignalHead(
  * adjacent crosswalks that meet at that corner. e.g. NW corner has a N
  * crosswalk button and a W crosswalk button, offset in different directions.
  */
-const PED_BUTTON_RADIUS = 7;
+const PED_BUTTON_RADIUS = 5;
 const CROSSWALK_BUTTON_POSITIONS: Record<Approach, Array<{ x: number; y: number }>> = {
   N: [
-    { x: STOP_LINES.W - 10, y: STOP_LINES.N - 25 }, // NW end (above corner)
-    { x: STOP_LINES.E + 10, y: STOP_LINES.N - 25 }, // NE end
+    { x: STOP_LINES.W - 7, y: STOP_LINES.N - 18 }, // NW end (above corner)
+    { x: STOP_LINES.E + 7, y: STOP_LINES.N - 18 }, // NE end
   ],
   S: [
-    { x: STOP_LINES.W - 10, y: STOP_LINES.S + 25 }, // SW end
-    { x: STOP_LINES.E + 10, y: STOP_LINES.S + 25 }, // SE end
+    { x: STOP_LINES.W - 7, y: STOP_LINES.S + 18 }, // SW end
+    { x: STOP_LINES.E + 7, y: STOP_LINES.S + 18 }, // SE end
   ],
   E: [
-    { x: STOP_LINES.E + 25, y: STOP_LINES.N - 10 }, // NE end (right of corner)
-    { x: STOP_LINES.E + 25, y: STOP_LINES.S + 10 }, // SE end
+    { x: STOP_LINES.E + 18, y: STOP_LINES.N - 7 }, // NE end (right of corner)
+    { x: STOP_LINES.E + 18, y: STOP_LINES.S + 7 }, // SE end
   ],
   W: [
-    { x: STOP_LINES.W - 25, y: STOP_LINES.N - 10 }, // NW end
-    { x: STOP_LINES.W - 25, y: STOP_LINES.S + 10 }, // SW end
+    { x: STOP_LINES.W - 18, y: STOP_LINES.N - 7 }, // NW end
+    { x: STOP_LINES.W - 18, y: STOP_LINES.S + 7 }, // SW end
   ],
 };
 
@@ -568,10 +569,10 @@ function drawPedButton(
   }
   // Ped glyph (sized to fit the smaller radius).
   ctx.fillStyle = glyphColor;
-  ctx.font = 'bold 10px sans-serif';
+  ctx.font = 'bold 7px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(glyph, cx, cy + 1);
+  ctx.fillText(glyph, cx, cy);
   ctx.restore();
 }
 
@@ -589,6 +590,119 @@ export function hitTestPedButton(x: number, y: number): Approach | null {
     }
   }
   return null;
+}
+
+// ── Speech bubbles for crosswalk state ─────────────────────────────────────
+// Modern crosswalks in the US have voice prompts ("Wait", "Walk sign is on",
+// "Finish crossing") triggered by the button. We render these as speech
+// bubbles near each crosswalk — makes the state transitions self-documenting
+// for a reviewer who doesn't want to read the code.
+
+const BUBBLE_POSITIONS: Record<Approach, { x: number; y: number; tailSide: 'bottom' | 'top' | 'left' | 'right' }> = {
+  N: { x: CENTER,         y: STOP_LINES.N - 50, tailSide: 'bottom' },
+  S: { x: CENTER,         y: STOP_LINES.S + 50, tailSide: 'top'    },
+  E: { x: STOP_LINES.E + 55, y: CENTER,          tailSide: 'left'   },
+  W: { x: STOP_LINES.W - 55, y: CENTER,          tailSide: 'right'  },
+};
+
+interface BubbleContent {
+  title: string;
+  subtitle: string;
+  color: string;
+}
+
+function bubbleContentFor(state: 'WALK' | 'FLASH_DONT_WALK' | 'DONT_WALK', pending: boolean): BubbleContent | null {
+  if (state === 'WALK') return {
+    title: '“Walk sign is on”',
+    subtitle: 'Cross now — vehicles stopped for you',
+    color: '#3ad27e',
+  };
+  if (state === 'FLASH_DONT_WALK') return {
+    title: '“Finish crossing”',
+    subtitle: 'Clearance countdown — hurry',
+    color: '#ff9933',
+  };
+  if (pending) return {
+    title: '“Wait”',
+    subtitle: 'Walk request queued for next parallel phase',
+    color: '#d4a017',
+  };
+  return null;
+}
+
+function drawCrosswalkBubbles(ctx: CanvasRenderingContext2D, snap: ControllerSnapshot): void {
+  for (const cw of APPROACHES) {
+    const state = snap.walkSignalFor(cw);
+    const pending = snap.pedRequestPendingFor(cw);
+    const content = bubbleContentFor(state, pending);
+    if (!content) continue;
+    drawBubble(ctx, BUBBLE_POSITIONS[cw], content);
+  }
+}
+
+function drawBubble(
+  ctx: CanvasRenderingContext2D,
+  pos: { x: number; y: number; tailSide: 'bottom' | 'top' | 'left' | 'right' },
+  content: BubbleContent,
+): void {
+  const w = 180;
+  const h = 36;
+  const r = 6;
+  const tailSize = 5;
+  const x = pos.x - w / 2;
+  const y = pos.y - h / 2;
+
+  ctx.save();
+
+  // Bubble body: rounded rect with colored left accent + dark fill + subtle border.
+  ctx.fillStyle = 'rgba(13, 17, 23, 0.96)';
+  ctx.strokeStyle = content.color;
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, x, y, w, h, r);
+  ctx.fill();
+  ctx.stroke();
+
+  // Tail — triangle pointing toward the crosswalk button.
+  ctx.fillStyle = 'rgba(13, 17, 23, 0.96)';
+  ctx.strokeStyle = content.color;
+  ctx.beginPath();
+  switch (pos.tailSide) {
+    case 'bottom':
+      ctx.moveTo(pos.x - tailSize, y + h);
+      ctx.lineTo(pos.x + tailSize, y + h);
+      ctx.lineTo(pos.x, y + h + tailSize);
+      break;
+    case 'top':
+      ctx.moveTo(pos.x - tailSize, y);
+      ctx.lineTo(pos.x + tailSize, y);
+      ctx.lineTo(pos.x, y - tailSize);
+      break;
+    case 'left':
+      ctx.moveTo(x, pos.y - tailSize);
+      ctx.lineTo(x, pos.y + tailSize);
+      ctx.lineTo(x - tailSize, pos.y);
+      break;
+    case 'right':
+      ctx.moveTo(x + w, pos.y - tailSize);
+      ctx.lineTo(x + w, pos.y + tailSize);
+      ctx.lineTo(x + w + tailSize, pos.y);
+      break;
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Text.
+  ctx.fillStyle = content.color;
+  ctx.font = 'bold 11px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(content.title, pos.x, y + 5);
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '9px system-ui, sans-serif';
+  ctx.fillText(content.subtitle, pos.x, y + 20);
+
+  ctx.restore();
 }
 
 function withAlpha(hex: string, alpha: number): string {

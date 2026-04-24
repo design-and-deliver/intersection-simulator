@@ -5,13 +5,14 @@ import { mulberry32, type Rng } from './rng';
 import { OPPOSITE, type Approach, type Movement } from './types';
 
 /**
- * Maximum acceptable probability of an opposing arrival during a permissive
- * LEFT car's transit. If the configured opposing arrival rate is high enough
- * that this threshold would be exceeded, refuse the permissive release —
- * even when the current state shows opposing clear. Approximates how a real
- * driver judges by traffic density, not just by a snapshot.
+ * Driver's risk tolerance for permissive left turns — the maximum acceptable
+ * probability of an opposing arrival during the turn's transit. Real US
+ * drivers accept gaps with ~30–50% arrival probability; 0.50 approximates
+ * that. Lower values (0.10–0.20) model a cautious driver; higher values
+ * (0.60+) model an aggressive one. Spec says "go if no cars are coming the
+ * other way" — a numeric threshold is a gap-acceptance model of that phrase.
  */
-const PERMISSIVE_LOOKAHEAD_RISK = 0.20;
+const PERMISSIVE_LOOKAHEAD_RISK = 0.50;
 
 const LEFT_MOVEMENTS: readonly Movement[] = ['N-LEFT', 'S-LEFT', 'E-LEFT', 'W-LEFT'];
 

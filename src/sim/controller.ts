@@ -266,9 +266,9 @@ export class Controller {
       case 'GREEN': {
         if (!this.demand) return this.cfg.fixedGreenMs;
         // Ped-serve constraint: the phase must last until the *latest* walk
-        // has completed its WALK + CLEARANCE from wherever it started.
-        // Per-crosswalk walkStartedAt means a mid-green press still gets the
-        // full walk duration — green extends accordingly.
+        // has completed its WALK + CLEARANCE from wherever it started. This
+        // also *stretches maxGreen* — a late-press walk would otherwise be
+        // truncated when green hits its normal cap.
         let pedFloor = 0;
         for (const cw of CROSSWALKS) {
           if (!this.pedRequests[cw]) continue;
@@ -277,13 +277,11 @@ export class Controller {
           const walkEnd = walkStart + this.cfg.pedWalkMs + this.cfg.pedClearanceMs;
           if (walkEnd > pedFloor) pedFloor = walkEnd;
         }
+        const effectiveMax = Math.max(this.cfg.maxGreenMs, pedFloor);
         const minGreen = Math.max(this.cfg.minGreenMs, pedFloor);
-        // Hard cap at maxGreen.
-        if (this.modeElapsedMs >= this.cfg.maxGreenMs) return this.cfg.maxGreenMs;
-        // Sustained demand → keep extending toward maxGreen.
-        if (this.phaseHasDemand(this.currentPhase)) return this.cfg.maxGreenMs;
-        // Demand dropped → gap out, but not before the minimum (which includes
-        // any ped-clearance floor).
+        if (this.modeElapsedMs >= effectiveMax) return effectiveMax;
+        if (this.phaseHasDemand(this.currentPhase)) return effectiveMax;
+        // Demand dropped → gap out, but not before the minimum.
         return Math.max(this.modeElapsedMs, minGreen);
       }
     }

@@ -6,17 +6,18 @@ export function startApp(canvas: HTMLCanvasElement, hudRoot: HTMLElement): void 
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('2D context not available');
 
-  // Arrival rates tuned just under steady-state service capacity, so queues
-  // form (the demo has something to show) but don't grow off-screen.
-  // Capacity per movement (rough): STRAIGHT ~14/min (2 sub-lanes), LEFT ~5/min,
-  // RIGHT ~6/min — accounting for actuation cycle distribution.
+  // Arrival rates tuned to three goals: (1) queues form so the demo has
+  // something to show, (2) queues don't grow off-screen, and (3) opposing
+  // STRAIGHT rates are low enough that the permissive-left Poisson
+  // lookahead occasionally allows a permissive turn (needs opposing rate
+  // below ~4.7/min for a 50% gap-acceptance driver and ~8.9s LEFT transit).
   const world = new World({
     seed: Math.floor(Math.random() * 0xffffffff),
     arrivalRates: {
-      'N-STRAIGHT': 13,
-      'S-STRAIGHT': 13,
-      'E-STRAIGHT': 11,
-      'W-STRAIGHT': 11,
+      'N-STRAIGHT': 4,
+      'S-STRAIGHT': 4,
+      'E-STRAIGHT': 4,
+      'W-STRAIGHT': 4,
       'N-LEFT': 4,
       'S-LEFT': 4,
       'E-LEFT': 3,

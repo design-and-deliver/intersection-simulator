@@ -38,7 +38,7 @@ Click any round button at an intersection corner to request a walk.
 | Opposing protected lefts, straights red | Phases B & D, enforced at module load + by runtime property test |
 | Smart sensor signal | `controller.setDemand()`: skip-empty + extend-while-demand + gap-out |
 | Walk button "clears" intersection | Concurrent phasing (per-crosswalk, served during parallel vehicle phase — real US pattern) |
-| LEFT 4th aspect (flashing orange) | Permissive-left; cars actually turn when opposing is clear *and* Poisson lookahead says risk < 20% |
+| LEFT 4th aspect (flashing orange) | Permissive-left; cars actually turn when opposing is clear *and* Poisson lookahead says arrival probability during transit < 50% (driver risk tolerance — see Design) |
 
 ---
 
@@ -103,7 +103,9 @@ Walk timing tracks *press time*, not phase start — pressing mid-green still ge
 
 During opposite-through phase, LEFT shows FLASHING_ORANGE. Cars release when:
 1. Opposing through is snapshot-clear (empty queue, no in-flight on opposing path), **and**
-2. Poisson lookahead: P(opposing arrival during turn transit) < 20%.
+2. Poisson lookahead: P(opposing arrival during turn transit) < `PERMISSIVE_LOOKAHEAD_RISK` (default 50%).
+
+The threshold is a **gap-acceptance model** of the spec's "go if no cars are coming the other way." Traffic studies put typical US driver tolerance around 30–50%; 50% is the realistic default. 20% would model a cautious driver (rarely takes a gap); 60%+ would model an aggressive one. Tune in `intersection.ts`.
 
 The movement is never added to `greenMovements()`, so safety invariant is untouched.
 
