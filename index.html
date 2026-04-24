@@ -40,8 +40,9 @@
       canvas {
         background: #1a1f26;
         display: block;
-        max-width: 100%;
-        height: auto;
+        width: 100%;
+        max-width: 720px;
+        aspect-ratio: 1 / 1;
         /* Zoom the intersection so it fills more of the view; the stage
            clips the outer road edges. Hit-test coords in app.ts use
            getBoundingClientRect, which accounts for CSS transforms — clicks
