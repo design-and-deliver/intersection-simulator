@@ -146,6 +146,44 @@
         font-size: 11px;
         line-height: 1.5;
       }
+      #desktop-only {
+        display: none;
+      }
+      /* Below this breakpoint the 1fr + 320px grid collapses and the scaled
+         canvas overflows the viewport. Rather than ship a half-working mobile
+         layout, swap in a brief "open on desktop" message. */
+      @media (max-width: 820px) {
+        body {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+        }
+        #stage, #hud { display: none; }
+        #desktop-only {
+          display: block;
+          max-width: 420px;
+          text-align: center;
+          background: var(--panel);
+          border: 1px solid var(--panel-border);
+          border-radius: 8px;
+          padding: 28px 24px;
+        }
+        #desktop-only h1 {
+          margin: 0 0 10px 0;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: var(--muted);
+        }
+        #desktop-only p {
+          margin: 0;
+          color: var(--text);
+          font-size: 13px;
+          line-height: 1.6;
+        }
+      }
     </style>
   </head>
   <body>
@@ -153,6 +191,10 @@
       <canvas id="c" width="800" height="800"></canvas>
     </div>
     <aside id="hud"></aside>
+    <div id="desktop-only">
+      <h1>Intersection</h1>
+      <p>This simulation is built for desktop. Please reopen on a larger screen to view it.</p>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
