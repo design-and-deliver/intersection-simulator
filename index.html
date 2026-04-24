@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intersection</title>
+    <style>
+      :root {
+        --bg: #0e1116;
+        --panel: #161b22;
+        --panel-border: #30363d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #58a6ff;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 13px;
+      }
+      body {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 16px;
+        padding: 16px;
+        min-height: 100vh;
+      }
+      #stage {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+      }
+      canvas {
+        background: #1a1f26;
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+      #hud {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .phase-card {
+        background: #0d1117;
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        padding: 10px 12px;
+      }
+      .phase-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .phase-mode {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .timer-bar {
+        margin-top: 8px;
+        height: 4px;
+        background: #21262d;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .timer-fill {
+        height: 100%;
+        background: var(--accent);
+        transition: width 80ms linear;
+      }
+      .queues {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .queue-cell {
+        background: #0d1117;
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        padding: 8px 10px;
+      }
+      .queue-cell .label {
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+      .queue-cell .row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+      }
+      .ped-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+      button.ped {
+        background: #21262d;
+        border: 1px solid var(--panel-border);
+        color: var(--text);
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+      }
+      button.ped:hover { background: #30363d; }
+      button.ped.requested {
+        background: #b08800;
+        border-color: #d4a017;
+        color: #0e1116;
+        font-weight: 600;
+      }
+      .footer {
+        margin-top: auto;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <canvas id="c" width="800" height="800"></canvas>
+    </div>
+    <aside id="hud"></aside>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
